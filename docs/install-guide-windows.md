@@ -1,6 +1,6 @@
 # Windows 安装手册（手动执行）
 
-更新时间：2026-02-22
+更新时间：2026-02-23
 
 ## 1. 适用范围
 
@@ -13,9 +13,10 @@
 
 1. 安装 Node.js（建议 LTS 版本）。
 2. 安装 pnpm（建议 9.x）。
-3. 安装 Python（建议 3.11 或 3.12）。
+3. 安装 Python（固定使用 3.12）。
 4. 安装 Git。
 5. 准备可用网络访问 Python 包与 npm 包镜像。
+6. 若当前机器没有 Python，也可先完成 Monorepo 模块 A（见 `docs/monorepo-bootstrap-guide.md`）。
 
 ## 3. 项目目录约定
 
@@ -29,19 +30,31 @@
 
 ## 4. 前端安装步骤（你执行）
 
-1. 进入前端目录：`cd frontend`
-2. 安装依赖：`pnpm install`
-3. 如需单独增加依赖：
+1. 先用官方脚手架初始化（交互式）：`pnpm create vite frontend`
+   - 选择 `framework`：`React`
+   - 选择 `variant`：`TypeScript`
+2. 进入前端目录：`cd frontend`
+3. 按模块 A.1 补齐前端依赖（见 `docs/manual-operations-playbook.md` 的 A1.2/A1.3）。
+4. 返回仓库根目录后执行：`pnpm install`（让工作区依赖与锁文件统一）。
+5. 验证前端可构建：`pnpm --filter frontend build`。
+6. 如需单独增加依赖：
    - 生产依赖：`pnpm add <pkg>`
    - 开发依赖：`pnpm add -D <pkg>`
+
+> 若出现 `Cannot find native binding`（常见于 vite beta + WSL 组合）：
+> 1. `Remove-Item -Recurse -Force node_modules, frontend/node_modules`
+> 2. `pnpm install`
+> 3. `pnpm --filter frontend build`
 
 ## 5. 后端安装步骤（你执行）
 
 1. 进入后端目录：`cd backend`
-2. 创建虚拟环境：`python -m venv .venv`
-3. 激活虚拟环境（Windows PowerShell）：`.venv\\Scripts\\Activate.ps1`
-4. 安装基础依赖：`pip install -r requirements.txt`
-5. 安装开发依赖：`pip install -r requirements-dev.txt`
+2. 检查 Python 版本（推荐命令）：`py -3.12 --version`
+3. 创建虚拟环境：`py -3.12 -m venv .venv`
+4. 激活虚拟环境（Windows PowerShell）：`.venv\\Scripts\\Activate.ps1`
+5. 升级 pip：`python -m pip install --upgrade pip`
+6. 安装开发依赖（含运行依赖）：`pip install -r requirements-dev.txt`
+7. 复制环境变量模板：`Copy-Item .env.example .env`
 
 ## 6. 环境变量步骤（你执行）
 
@@ -58,7 +71,8 @@
 
 1. `pnpm` 权限或重命名错误：优先在 Windows 终端执行安装，不在 `/mnt` 路径混用多终端并发安装。
 2. Python 包安装失败：先确认 Python 与 pip 指向同一解释器。
-3. C 扩展编译失败：优先使用预编译轮子版本，必要时切换 Python 次版本。
+3. 若 `py -3.12` 不可用：先确认 Python Launcher 是否安装，或改用 `python --version` 检查是否为 3.12。
+4. C 扩展编译失败：优先使用预编译轮子版本，必要时先保持最小依赖集合，不要提前安装重依赖。
 
 ## 8. 维护规则（必须执行）
 

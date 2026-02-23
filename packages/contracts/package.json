@@ -1,0 +1,11 @@
+{
+  "name": "@cx/contracts",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "build": "echo \"contracts build pending\"",
+    "lint": "echo \"contracts lint pending\"",
+    "test": "echo \"contracts test pending\"",
+    "typecheck": "echo \"contracts typecheck pending\""
+  }
+}

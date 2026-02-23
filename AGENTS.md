@@ -28,6 +28,7 @@
 
 - 前端默认技术栈：React + TypeScript（函数组件 + Hooks）。
 - 后端默认技术栈：Python + FastAPI。
+- 后端 Python 版本基线：3.12（统一使用，避免跨次版本兼容差异）。
 - 前后端分离开发，默认同仓库组织（`frontend/` + `backend/`）。
 - 无明确需求时不引入重型框架或复杂中间件。
 

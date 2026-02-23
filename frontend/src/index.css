@@ -1,0 +1,30 @@
+/*
+ * 文件用途：挂载 Tailwind 样式入口，并定义应用基础排版与页面底色。
+ * 使用方：`src/main.tsx` 在应用入口引入本文件。
+ */
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family:
+      'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Segoe UI', sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: rgb(248 250 252);
+    color: rgb(15 23 42);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
