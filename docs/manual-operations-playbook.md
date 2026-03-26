@@ -1,6 +1,6 @@
 # 人工操作台账（你在 Windows 执行）
 
-更新时间：2026-02-23
+更新时间：2026-03-26
 
 ## 1. 文档目的
 
@@ -20,7 +20,7 @@
 2. 每个模块结束后必须执行“模块停靠验证清单”。
 3. 执行结果（成功/失败 + 关键日志）要回填到 `localDoc/TODO.md`。
 4. 助手不会在未记录命令含义的情况下要求你直接运行。
-5. Monorepo 初始化按 `docs/monorepo-bootstrap-guide.md` 逐步执行。
+5. 当前项目已完成 Monorepo 初始化，P0 阶段优先执行 A.1 / B.1 基线验证，不再重复脚手架初始化与历史安装步骤。
 
 ## 3. 命令标记规范
 
@@ -88,24 +88,24 @@
 
 ---
 
-## 6.5 模块 A.1：前端基础依赖与插件补齐（你执行）
+## 6.5 模块 A.1：前端工程基线验证（你执行）
 
-说明：前端脚手架已完成后，补齐路由、请求层、服务端状态、表单校验、图表和 Tailwind。  
-本轮助手已完成代码接入（路由骨架 + Tailwind + Query Provider），你只需执行安装/验证。
+说明：前端脚手架和依赖声明已经在仓库中，不再要求你手动执行 `pnpm add`。  
+P0 阶段只做安装、编译、构建、任务编排和页面启动验证。
 
 | 步骤 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
 | --- | --- | --- | --- | --- | --- |
-| A1.1 | 你执行 | `cd frontend` | 进入前端目录 | 进入 `frontend` | 当前路径错误 |
-| A1.2 | 你执行 | `pnpm add react-router-dom @tanstack/react-query @tanstack/react-query-devtools axios zod react-hook-form @hookform/resolvers echarts echarts-for-react dayjs` | 安装前端核心生产依赖 | 安装成功无冲突 | 网络、pnpm 镜像、锁文件冲突 |
-| A1.3 | 你执行 | `pnpm add -D tailwindcss @tailwindcss/vite prettier eslint-config-prettier vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event msw` | 安装开发与测试依赖 | 安装成功无冲突 | 版本冲突、网络问题 |
-| A1.4 | 你执行 | `cd ..` | 返回仓库根目录 | 回到项目根目录 | 路径错误 |
-| A1.5 | 你执行 | `pnpm install` | 让根工作区锁文件与 `vite@7` 稳定版本重新对齐 | 安装完成无报错 | 网络问题、权限问题 |
+| A1.1 | 你执行 | `pnpm install` | 安装工作区依赖，并让锁文件与当前 `package.json` 保持一致 | 安装完成无报错 | 网络问题、权限问题、Windows/WSL 混用安装 |
+| A1.2 | 你执行 | `pnpm --filter frontend exec tsc -b` | 验证前端 TypeScript 编译基线 | 编译成功无报错 | 类型错误、TypeScript 配置问题 |
+| A1.3 | 你执行 | `pnpm --filter frontend build` | 验证前端构建是否通过 | build 成功产出 `dist` | 重点看 vite / rolldown 报错 |
+| A1.4 | 你执行 | `pnpm turbo run build --dry` | 验证 Monorepo 任务编排仍正常 | 可看到任务图 | turbo / workspace 配置问题 |
+| A1.5 | 你执行 | `cd frontend` | 进入前端目录，准备本地页面验证 | 进入 `frontend` | 当前路径错误 |
+| A1.6 | 你执行 | `pnpm dev --host --port 5173` | 启动前端开发服务，供页面人工验证与 Chrome MCP 校验 | 开发服务正常启动 | 依赖未安装、端口占用、配置冲突 |
 
 | 验证 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
 | --- | --- | --- | --- | --- | --- |
-| A1.V1 | 你执行 | `cd frontend && pnpm dev` | 验证前端依赖可运行 | 开发服务正常启动 | 依赖未安装或配置冲突 |
-| A1.V1.1 | 你执行 | `cd .. && pnpm --filter frontend build` | 验证前端构建是否通过 | build 成功产出 dist | 重点看 vite/rolldown 报错 |
-| A1.V2 | 你执行 | `cd .. && pnpm turbo run build --dry` | 验证 Monorepo 任务仍正常 | 可看到任务图 | turbo/workspace 配置问题 |
+| A1.V1 | 你执行 | 访问 `http://localhost:5173` | 验证前端页面可正常打开 | 页面可访问，无白屏与明显控制台报错 | dev server 未启动、端口错误 |
+| A1.V2 | 你执行 | 启动后通知助手 | 让助手通过 Chrome MCP 继续做页面结构检查 | 助手能访问页面并反馈结果 | 浏览器未启动或地址错误 |
 
 若 A1.V1.1 报 `Cannot find native binding`，执行应急修复：
 
@@ -126,11 +126,11 @@
 | --- | --- | --- | --- | --- | --- |
 | B1.1 | 你执行 | `cd backend` | 进入后端目录 | 当前目录变为 `backend` | 路径错误 |
 | B1.2 | 你执行 | `py -3.12 --version` | 校验 Python 3.12 可用 | 输出 `Python 3.12.x` | 未安装 Python Launcher 或未安装 3.12 |
-| B1.3 | 你执行 | `py -3.12 -m venv .venv` | 创建后端虚拟环境 | 生成 `.venv` 目录 | Python 版本不对、权限问题 |
+| B1.3 | 你执行 | `py -3.12 -m venv .venv` | 创建后端虚拟环境；若 `.venv` 已存在且版本正确，可跳过重建 | 生成或复用 `.venv` 目录 | Python 版本不对、权限问题 |
 | B1.4 | 你执行 | `.\\.venv\\Scripts\\Activate.ps1` | 激活虚拟环境 | 终端前缀出现 `(.venv)` | PowerShell 执行策略限制 |
 | B1.5 | 你执行 | `python -m pip install --upgrade pip` | 升级 pip 以减少安装兼容问题 | 升级成功无报错 | 镜像与网络问题 |
 | B1.6 | 你执行 | `pip install -r requirements-dev.txt` | 安装后端运行/开发依赖 | 安装成功无冲突 | 网络、代理、镜像配置 |
-| B1.7 | 你执行 | `Copy-Item .env.example .env` | 生成本地环境变量文件 | `backend/.env` 生成 | 文件权限或路径错误 |
+| B1.7 | 你执行 | `Copy-Item .env.example .env` | 生成本地环境变量文件；若 `.env` 已存在且内容可用，可跳过覆盖 | `backend/.env` 生成 | 文件权限或路径错误 |
 | B1.8 | 你执行 | `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` | 启动后端服务 | 控制台显示启动成功 | 依赖未安装、端口占用 |
 
 | 验证 | 执行方 | 命令/访问点 | 作用说明 | 预期结果 | 失败时先看什么 |

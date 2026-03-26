@@ -1,12 +1,13 @@
 # 依赖与插件清单（含选择理由）
 
-更新时间：2026-02-23
+更新时间：2026-03-26
 
 ## 1. 使用说明
 
 1. 你在 Windows 手动安装，助手只提供清单与步骤。
-2. 本文分为：`当前已装`、`必须补齐`、`后置引入`。
-3. 目标是“够用可扩展”，避免一次装太多导致排错困难。
+2. 本文分为：`当前已声明`、`P0 需要验证`、`后置引入`。
+3. 当前仓库的前端依赖已经写入 `frontend/package.json`，P0 阶段不再要求手动 `pnpm add`。
+4. 目标是“够用可扩展”，避免一次装太多导致排错困难。
 
 ## 2. 当前前端状态（实际扫描）
 
@@ -16,6 +17,9 @@
 2. `vite` / `@vitejs/plugin-react`
 3. `typescript` / `@types/react` / `@types/react-dom`
 4. `eslint` 相关
+5. `react-router-dom` / `@tanstack/react-query` / `axios` / `zod` / `react-hook-form`
+6. `echarts` / `echarts-for-react` / `dayjs`
+7. `zustand`（已声明但当前代码未使用，后续可再决定是否保留）
 
 已接入（本轮代码已完成）：
 
@@ -37,12 +41,12 @@
 
 ## 3.2 是否需要状态管理
 
-结论：分两层，不一次引入全局 store。  
+结论：分两层，不把全局 store 当作当前主线。  
 理由与方案：
 
 1. 服务端状态：`必须` 用 `@tanstack/react-query`。  
 原因：接口请求缓存、重试、失效控制、加载状态统一。
-2. 客户端全局状态：`暂不引入 Zustand/Redux`。  
+2. 客户端全局状态：当前代码未使用 `zustand`，也不应在 P0/P1 阶段围绕它设计状态流。  
 原因：当前还没复杂跨页共享，先用组件状态 + URL 参数足够。
 3. 触发引入全局 store 条件：  
 至少出现 3 个页面共享同一复杂 UI 状态，且 props 传递明显失控。
@@ -61,33 +65,24 @@
 2. 图表层：`echarts + echarts-for-react`（回测曲线、分布图能力足够）。
 3. 时间工具：`dayjs`（轻量且足够）。
 
-## 4. 前端必须补齐依赖（模块 A.1）
+## 4. 前端依赖基线验证（模块 A.1 / P0）
 
-安装命名提醒：
+P0 阶段你只需要把仓库中已经声明的依赖安装并验证，不再手动补包。
 
-1. npm 包名区分大小写，必须使用小写包名（如 `zustand`）。
-2. 不要把二选一方案写成一个包名（如 `Zustand/Redux` 会 404）。
-
-## 4.1 生产依赖（你执行）
+## 4.1 安装与校验命令（你执行）
 
 ```bash
-cd frontend
-pnpm add react-router-dom @tanstack/react-query @tanstack/react-query-devtools axios zod react-hook-form @hookform/resolvers echarts echarts-for-react dayjs
+pnpm install
+pnpm --filter frontend exec tsc -b
+pnpm --filter frontend build
 ```
 
-## 4.2 开发依赖（你执行）
-
-```bash
-cd frontend
-pnpm add -D tailwindcss @tailwindcss/vite prettier eslint-config-prettier vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event msw
-```
-
-## 4.3 Tailwind 接入检查（你执行）
+## 4.2 Tailwind 接入检查（你执行）
 
 1. `frontend/vite.config.ts` 含 `@tailwindcss/vite` 插件。
 2. `frontend/src/index.css` 含 `@import "tailwindcss";`。
 
-## 4.4 Vite 稳定版本校正（你执行）
+## 4.3 Vite 稳定版本校正（你执行）
 
 背景：`vite@8 beta` 在 WSL + pnpm 场景可能触发 `rolldown` 原生绑定缺失。  
 当前方案：已将项目改为 `vite@^7.1.11` 稳定线，避免该类环境问题。
@@ -107,9 +102,10 @@ pnpm --filter frontend build
 
 ## 5. 前端后置依赖（先不装）
 
-1. `zustand`：等出现真实跨页复杂本地状态再引入。
-2. `@tanstack/react-table`：等明细表格交互复杂后再引入。
-3. 组件库（如 `antd` / `mui`）：当前用 Tailwind 足够，避免体积和学习负担。
+1. `vitest`、`@testing-library/*`、`msw`：等进入前端测试模块时再引入。
+2. `prettier`、`eslint-config-prettier`：等格式化策略确定后再引入。
+3. `@tanstack/react-table`：等明细表格交互复杂后再引入。
+4. 组件库（如 `antd` / `mui`）：当前用 Tailwind 足够，避免体积和学习负担。
 
 ## 6. 后端依赖（FastAPI）
 

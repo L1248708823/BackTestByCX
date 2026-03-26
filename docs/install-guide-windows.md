@@ -1,6 +1,6 @@
 # Windows 安装手册（手动执行）
 
-更新时间：2026-02-23
+更新时间：2026-03-26
 
 ## 1. 适用范围
 
@@ -30,16 +30,12 @@
 
 ## 4. 前端安装步骤（你执行）
 
-1. 先用官方脚手架初始化（交互式）：`pnpm create vite frontend`
-   - 选择 `framework`：`React`
-   - 选择 `variant`：`TypeScript`
-2. 进入前端目录：`cd frontend`
-3. 按模块 A.1 补齐前端依赖（见 `docs/manual-operations-playbook.md` 的 A1.2/A1.3）。
-4. 返回仓库根目录后执行：`pnpm install`（让工作区依赖与锁文件统一）。
-5. 验证前端可构建：`pnpm --filter frontend build`。
-6. 如需单独增加依赖：
-   - 生产依赖：`pnpm add <pkg>`
-   - 开发依赖：`pnpm add -D <pkg>`
+1. 当前仓库的前端脚手架和依赖声明已经存在，不再执行 `pnpm create vite frontend`。
+2. 在仓库根目录执行：`pnpm install`。
+3. 验证 TypeScript 编译：`pnpm --filter frontend exec tsc -b`。
+4. 验证前端构建：`pnpm --filter frontend build`。
+5. 如需本地页面验证，再执行：`cd frontend` + `pnpm dev --host --port 5173`。
+6. 只有在后续真实新增依赖且已得到确认时，才执行 `pnpm add` / `pnpm add -D`。
 
 > 若出现 `Cannot find native binding`（常见于 vite beta + WSL 组合）：
 > 1. `Remove-Item -Recurse -Force node_modules, frontend/node_modules`
@@ -50,11 +46,11 @@
 
 1. 进入后端目录：`cd backend`
 2. 检查 Python 版本（推荐命令）：`py -3.12 --version`
-3. 创建虚拟环境：`py -3.12 -m venv .venv`
+3. 创建虚拟环境：`py -3.12 -m venv .venv`（若 `.venv` 已存在且版本正确，可复用）
 4. 激活虚拟环境（Windows PowerShell）：`.venv\\Scripts\\Activate.ps1`
 5. 升级 pip：`python -m pip install --upgrade pip`
 6. 安装开发依赖（含运行依赖）：`pip install -r requirements-dev.txt`
-7. 复制环境变量模板：`Copy-Item .env.example .env`
+7. 复制环境变量模板：`Copy-Item .env.example .env`（若 `.env` 已存在且内容有效，可跳过）
 
 ## 6. 环境变量步骤（你执行）
 

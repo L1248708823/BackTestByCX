@@ -1,6 +1,6 @@
 # 启动与联调手册（Windows 执行）
 
-更新时间：2026-02-23
+更新时间：2026-03-26
 
 ## 1. 目标
 
@@ -14,7 +14,7 @@
 2. 已查看 `docs/manual-operations-playbook.md` 并按台账执行人工命令。
 3. `frontend/` 和 `backend/` 目录已初始化。
 4. 后端 `.env` 已配置。
-5. 前端构建校验通过：`pnpm --filter frontend build`。
+5. 若尚未完成 P0 基线验证，请先执行：`pnpm --filter frontend exec tsc -b`、`pnpm --filter frontend build`。
 
 ## 3. 后端启动（你执行）
 
@@ -30,11 +30,12 @@
 1. 进入目录：`cd frontend`
 2. 启动服务：`pnpm dev --host --port 5173`
 3. 页面检查：访问 `http://localhost:5173`。
+4. 如需页面联动检查，保持页面运行后通知助手，助手可使用 Chrome MCP 做界面校验。
 
 ## 5. 联调检查清单
 
 1. 健康检查接口 `/api/v1/health` 返回 `status=ok`。
-2. 单次回测接口 `/api/v1/backtests/run` 返回结构化结果。
+2. 单次回测接口 `/api/v1/backtests/run` 返回结构化结果（当前为骨架占位实现）。
 3. OpenAPI 页面 `/api/v1/docs` 正常可访问。
 4. 随机实验与 AI 报告接口暂未落地（后续模块再验证）。
 5. 错误场景下前端能看到可执行提示（前端联调阶段验证）。
@@ -43,8 +44,9 @@
 
 1. 后端单元测试：`pytest`
 2. 后端覆盖率：`pytest --cov`
-3. 前端测试：`pnpm test`
-4. 前端构建：`pnpm build`
+3. 前端 TypeScript 编译：`pnpm --filter frontend exec tsc -b`
+4. 前端构建：`pnpm --filter frontend build`
+5. Monorepo 任务干跑：`pnpm turbo run build --dry`
 
 ## 7. 常见启动问题
 
@@ -53,6 +55,7 @@
 3. API 404：确认前端请求前缀与后端路由一致。
 4. AI 接口超时：先降级模型再重试，记录请求参数。
 5. `Cannot find native binding`：按 `docs/manual-operations-playbook.md` 的 A1.F1~A1.F3 执行清理与重装。
+6. 前端没有 `pnpm test` 脚本：当前阶段以 TypeScript 编译和构建结果作为 P0 基线校验，不要执行不存在的测试命令。
 
 ## 8. 维护规则（必须执行）
 
