@@ -1,6 +1,6 @@
 # 启动与联调手册（Windows 执行）
 
-更新时间：2026-03-26
+更新时间：2026-03-30
 
 ## 1. 目标
 
@@ -14,7 +14,7 @@
 2. 已查看 `docs/manual-operations-playbook.md` 并按台账执行人工命令。
 3. `frontend/` 和 `backend/` 目录已初始化。
 4. 后端 `.env` 已配置。
-5. 若尚未完成 P0 基线验证，请先执行：`pnpm --filter frontend exec tsc -b`、`pnpm --filter frontend build`。
+5. 若尚未完成 P0 基线验证，请先执行：`pnpm run check:pre-commit`、`pnpm --filter frontend build`。
 
 ## 3. 后端启动（你执行）
 
@@ -44,7 +44,7 @@
 
 1. 后端单元测试：`pytest`
 2. 后端覆盖率：`pytest --cov`
-3. 前端 TypeScript 编译：`pnpm --filter frontend exec tsc -b`
+3. 前端提交前类型校验：`pnpm run check:pre-commit`
 4. 前端构建：`pnpm --filter frontend build`
 5. Monorepo 任务干跑：`pnpm turbo run build --dry`
 
@@ -56,6 +56,7 @@
 4. AI 接口超时：先降级模型再重试，记录请求参数。
 5. `Cannot find native binding`：按 `docs/manual-operations-playbook.md` 的 A1.F1~A1.F3 执行清理与重装。
 6. 前端没有 `pnpm test` 脚本：当前阶段以 TypeScript 编译和构建结果作为 P0 基线校验，不要执行不存在的测试命令。
+7. Git 提交前未触发类型校验：先执行 `pnpm run prepare`，再检查 `git config core.hooksPath` 是否为 `.husky/_`。
 
 ## 8. 维护规则（必须执行）
 

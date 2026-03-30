@@ -159,6 +159,25 @@ P0 阶段只做安装、编译、构建、任务编排和页面启动验证。
 
 ---
 
+## 6.10 模块 P0.2：提交前 TypeScript 校验 Hook（你执行）
+
+说明：本模块只解决“提交前暴露前端类型断裂问题”，当前不接入 `lint-staged`。  
+原因：当前主要风险是后端契约变更后前端字段访问失效，这属于全量 TypeScript 校验问题，不是 staged 文件级 lint 问题。
+
+| 步骤 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
+| --- | --- | --- | --- | --- | --- |
+| P0.2.1 | 你执行 | `pnpm install` | 安装根目录新增的 `husky` 依赖，并同步最新脚本声明 | 安装成功无冲突 | 网络、pnpm 权限、锁文件冲突 |
+| P0.2.2 | 你执行 | `pnpm run prepare` | 让 Husky 在当前仓库注册 Git Hook | 执行成功无报错 | `node_modules` 未安装、Git 环境异常 |
+| P0.2.3 | 你执行 | `pnpm run check:pre-commit` | 手动验证提交前检查脚本可运行 | 命令成功退出 | 前端 TypeScript 报错、依赖未安装 |
+| P0.2.4 | 你执行 | 当本次改动包含后端 OpenAPI 契约变化时，先执行 `pnpm --filter frontend run generate:api-types`，再执行 `pnpm run check:pre-commit` | 先同步前端生成类型，再做全量类型校验，避免用旧类型文件掩盖真实问题 | 类型文件更新后校验通过 | 后端未启动、OpenAPI 路径错误、前端字段未同步 |
+
+| 验证 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
+| --- | --- | --- | --- | --- | --- |
+| P0.2.V1 | 你执行 | `git config core.hooksPath` | 验证 Husky 已接管当前仓库 Hook 目录 | 输出 `.husky/_` | `prepare` 未执行、Git 配置异常 |
+| P0.2.V2 | 你执行 | 正常执行一次 `git commit` | 验证提交前 Hook 会自动触发类型检查 | 提交前先执行 `pnpm run check:pre-commit` | Husky 未安装成功、Hook 文件未生效 |
+
+---
+
 ## 7. 回填模板（复制到 TODO 或评论）
 
 ```text

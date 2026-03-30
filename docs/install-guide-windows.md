@@ -1,6 +1,6 @@
 # Windows 安装手册（手动执行）
 
-更新时间：2026-03-26
+更新时间：2026-03-30
 
 ## 1. 适用范围
 
@@ -32,10 +32,11 @@
 
 1. 当前仓库的前端脚手架和依赖声明已经存在，不再执行 `pnpm create vite frontend`。
 2. 在仓库根目录执行：`pnpm install`。
-3. 验证 TypeScript 编译：`pnpm --filter frontend exec tsc -b`。
-4. 验证前端构建：`pnpm --filter frontend build`。
-5. 如需本地页面验证，再执行：`cd frontend` + `pnpm dev --host --port 5173`。
-6. 只有在后续真实新增依赖且已得到确认时，才执行 `pnpm add` / `pnpm add -D`。
+3. 执行：`pnpm run prepare`，注册当前仓库的 Husky Hook。
+4. 验证提交前校验脚本：`pnpm run check:pre-commit`。
+5. 验证前端构建：`pnpm --filter frontend build`。
+6. 如需本地页面验证，再执行：`cd frontend` + `pnpm dev --host --port 5173`。
+7. 只有在后续真实新增依赖且已得到确认时，才执行 `pnpm add` / `pnpm add -D`。
 
 > 若出现 `Cannot find native binding`（常见于 vite beta + WSL 组合）：
 > 1. `Remove-Item -Recurse -Force node_modules, frontend/node_modules`
@@ -69,6 +70,7 @@
 2. Python 包安装失败：先确认 Python 与 pip 指向同一解释器。
 3. 若 `py -3.12` 不可用：先确认 Python Launcher 是否安装，或改用 `python --version` 检查是否为 3.12。
 4. C 扩展编译失败：优先使用预编译轮子版本，必要时先保持最小依赖集合，不要提前安装重依赖。
+5. Git 提交前 Hook 没触发：先在仓库根目录执行 `pnpm run prepare`，再用 `git config core.hooksPath` 确认输出 `.husky/_`。
 
 ## 8. 维护规则（必须执行）
 

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# 提交前执行前端全量 TypeScript 校验，提前暴露契约字段和页面用法断裂问题。
+pnpm run check:pre-commit
