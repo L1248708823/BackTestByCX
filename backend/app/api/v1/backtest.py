@@ -7,13 +7,23 @@ Business logic is delegated to service layer objects.
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_backtest_service
+from app.schemas.common import ErrorResponse
 from app.schemas.backtest import BacktestRunRequest, BacktestRunResponse
 from app.services.backtest_service import BacktestService
 
 backtest_router = APIRouter(prefix="/backtests")
 
 
-@backtest_router.post("/run", response_model=BacktestRunResponse)
+@backtest_router.post(
+    "/run",
+    response_model=BacktestRunResponse,
+    responses={
+        422: {
+            "model": ErrorResponse,
+            "description": "Request payload validation failed",
+        },
+    },
+)
 def run_backtest(
     payload: BacktestRunRequest,
     service: BacktestService = Depends(get_backtest_service),

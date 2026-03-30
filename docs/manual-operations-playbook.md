@@ -141,6 +141,24 @@ P0 阶段只做安装、编译、构建、任务编排和页面启动验证。
 
 ---
 
+## 6.9 模块 P1.1：OpenAPI 类型生成基线（你执行）
+
+说明：当前项目已决定采用 `openapi-typescript`，只生成前端 TypeScript 类型，不生成完整 client。  
+本模块目标是让前端类型直接来自后端 OpenAPI，而不是继续手写第二套接口结构。
+
+| 步骤 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
+| --- | --- | --- | --- | --- | --- |
+| P1.1.1 | 你执行 | `pnpm add -D openapi-typescript --filter frontend` | 为前端安装 OpenAPI 类型生成工具 | 安装成功无冲突 | 网络、pnpm 权限、锁文件冲突 |
+| P1.1.2 | 你执行 | `cd backend` + `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` | 启动后端，保证 OpenAPI 文档可访问 | 服务启动成功 | 后端未安装依赖、端口占用 |
+| P1.1.3 | 你执行 | `cd frontend` + `pnpm generate:api-types` | 从后端 OpenAPI 生成前端类型文件 | 生成 `src/types/api-schema.ts` | 后端未启动、openapi 路径错误、依赖未安装 |
+
+| 验证 | 执行方 | 命令 | 作用说明 | 预期结果 | 失败时先看什么 |
+| --- | --- | --- | --- | --- | --- |
+| P1.1.V1 | 你执行 | 检查 `frontend/src/types/api-schema.ts` | 验证类型文件已生成 | 文件存在且内容非空 | 生成命令未执行或失败 |
+| P1.1.V2 | 你执行 | 将生成命令输出或报错贴给助手 | 让助手继续完成前端类型接入代码 | 助手可基于结果继续编码 | 终端路径错误或命令未成功 |
+
+---
+
 ## 7. 回填模板（复制到 TODO 或评论）
 
 ```text

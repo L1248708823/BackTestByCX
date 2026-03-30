@@ -1,17 +1,30 @@
 # 编码助手协作约定（cx回测）
 
-## 交流
 
-- 默认用中文沟通，结论清晰可执行。
-- 需求不确定时先列出不确定点并询问，不“先改再说”。
-- 关键信息缺失必须暂停并询问，不在缺证据条件下自拟实现。
-- 每次回答开头使用“曼波~”。
 
 ## 项目定位
 
 - 这是学习 + 个人项目。
 - 优先级：可读性与可解释性 > 炫技与过度优化。
 - 任何抽象设计都要给出“当前收益”，没有收益就保持简单。
+
+## Implementation Guardrails（必须执行）
+
+- No compatibility code. No fallback code. No dual-field support.
+- If a field is renamed, change it everywhere in the same task. Do not keep old fields alive with aliasing, `??`, `||`, `or`, adapter layers, compatibility shims, or temporary mapping code.
+- Keep one source of truth for data structures. Frontend and backend should converge on one contract, not maintain parallel near-duplicate shapes.
+- Avoid over-engineering. Only make changes that are directly requested or clearly necessary for the current task.
+- Do not confuse agreed core extensibility with over-engineering. If a field or extension point was part of the agreed project direction from the beginning, it may stay. Example: keeping `strategy_id` is acceptable because strategy-based execution was an explicit original goal, even if MVP starts with only `dca`.
+- Do not add features, refactors, abstractions, helpers, utilities, wrappers, options, or configurability unless the current task truly needs them.
+- Keep only the minimum extension points that are already explicitly agreed. Do not use this rule to justify adding new speculative fields or future-facing abstractions beyond the agreed scope.
+- Do not design for hypothetical future requirements. A simple direct implementation is preferred over a reusable abstraction for one-time logic.
+- Validate only at real system boundaries: user input, HTTP requests, persisted external data, third-party APIs. Do not add defensive validation for internal flows that are already guaranteed by the current code.
+- Do not add backwards-compatibility hacks such as re-exporting renamed types, keeping deprecated fields, adding "removed" comments, or preserving dead paths for safety.
+- If you are sure old code or old fields are unused, delete them completely instead of hiding them behind compatibility layers.
+- When fixing a bug, fix the bug only. Do not clean up surrounding code unless that cleanup is required to complete the fix correctly.
+- When implementing a feature, do the minimum complete change. Do not add adjacent improvements "while you are here".
+- Comments must be written in Chinese. Do not add comments to untouched code unless they are required to explain non-obvious logic that you are changing.
+- At the current project stage, assume there is no legacy burden worth preserving. Prefer deleting stale fields and stale structures over carrying them forward.
 
 ## 协作边界（代码 vs 安装）
 
@@ -35,6 +48,7 @@
 ## 注释与可读性规范（前后端都必须执行）
 
 - 每个非极简源码文件开头必须有“文件用途说明”注释（做什么、被谁使用）。
+- 注释必须是中文
 - 每个非极简函数必须补注释：
   - 作用
   - 入参
@@ -58,22 +72,11 @@
 - 对外数据结构使用明确的 schema（如 Pydantic 模型）并补字段说明。
 - 公共函数与核心类使用 docstring，保持输入输出与异常语义可追踪。
 
-## 大文件拆分判定与执行
-
-- 触发“先询问是否拆分”的条件：单文件超过 450 行，或 TS/TSX 逻辑超过 220 行，或 JSX 结构超过 260 行。
-- 可明确识别为低耦合可复用模块时，可直接抽离到 `frontend/src/components/` 或 `frontend/src/hooks/`。
-- 页面专属模块优先就近放在页面目录下，避免过早全局化。
-- 涉及跨模块状态、权限或路由耦合的拆分，先询问后执行。
-
-## 样式约束（必须执行）
-
-- 优先使用语义化设计 Token，避免无语义硬编码颜色。
-- 禁止新增全局样式污染（避免直接对 `a`、`button`、`div` 等标签施加业务样式）。
 
 ## 本地文档与 TODO 维护（必须执行）
 
 > 约定：`localDoc/` 为本机本地资料目录，不提交到版本库。
-
+- 文档名称优先中文
 - 每完成一个可独立验收的功能模块后，必须同步更新 `localDoc/TODO.md`。
 - 依赖、安装流程、启动流程变更时，必须同步更新：
   - `docs/dependency-checklist.md`

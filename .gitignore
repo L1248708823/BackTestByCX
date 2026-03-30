@@ -1,5 +1,6 @@
 # Local workspace and assistant artifacts
 .codex/
+.agents/
 localDoc/
 
 # Python

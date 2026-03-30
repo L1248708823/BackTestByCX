@@ -28,6 +28,10 @@
 3. 服务端状态层已接入：`QueryClientProvider + ReactQueryDevtools`。
 4. 默认 Vite Demo 示例已移除，替换为项目占位页面结构。
 
+待接入（已决策，等待你安装）：
+
+1. `openapi-typescript`：用于把后端 OpenAPI 转成前端 TypeScript 类型，避免继续手写第二套接口结构。
+
 ## 3. 前端架构决策（你关心的重点）
 
 ## 3.1 是否需要路由
@@ -106,6 +110,7 @@ pnpm --filter frontend build
 2. `prettier`、`eslint-config-prettier`：等格式化策略确定后再引入。
 3. `@tanstack/react-table`：等明细表格交互复杂后再引入。
 4. 组件库（如 `antd` / `mui`）：当前用 Tailwind 足够，避免体积和学习负担。
+5. `Orval`、`Hey API` 等完整 client 生成工具：当前先不装，等确实需要 mock 或完整 client 再评估。
 
 ## 6. 后端依赖（FastAPI）
 
