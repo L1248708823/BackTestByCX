@@ -30,7 +30,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/backtests/run": {
+    "/api/v1/backtests/dca/run": {
         parameters: {
             query?: never;
             header?: never;
@@ -40,17 +40,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Run Backtest
-         * @description Run a single backtest job with validated request payload.
+         * Run Dca Backtest
+         * @description 运行一次 DCA 回测并返回结果。
          *
          *     Args:
-         *         payload: User-requested backtest parameters.
-         *         service: Service layer dependency handling backtest orchestration.
+         *         payload: DCA 回测请求体（已校验）。
+         *         service: DCA 回测用例 Service。
          *
          *     Returns:
-         *         BacktestRunResponse: Structured summary for frontend display.
+         *         DcaBacktestRunResponse: 回测结果结构。
          */
-        post: operations["run_backtest_api_v1_backtests_run_post"];
+        post: operations["run_dca_backtest_api_v1_backtests_dca_run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -162,135 +162,6 @@ export interface components {
             event?: string | null;
         };
         /**
-         * BacktestRunRequest
-         * @description 单次回测请求体。
-         *
-         *     说明：
-         *         该结构描述用户从参数页提交到后端的一次完整回测配置。
-         *         当前虽然 MVP 只落地 `dca`，但 `strategy_id` 属于已明确的核心扩展点，因此保留。
-         */
-        BacktestRunRequest: {
-            /**
-             * Symbol
-             * @description ETF 代码，例如 510300；当前约定只接受 A 股 ETF 标的代码
-             */
-            symbol: string;
-            /**
-             * Start Date
-             * Format: date
-             * @description 回测开始日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
-             */
-            start_date: string;
-            /**
-             * End Date
-             * Format: date
-             * @description 回测结束日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
-             */
-            end_date: string;
-            /**
-             * Strategy Id
-             * @description 策略标识；当前默认且唯一有效值是 dca，后续新增策略时仍沿用该入口字段
-             * @default dca
-             */
-            strategy_id: string;
-            /**
-             * Initial Capital
-             * @description 初始现金，单位为人民币元；表示回测开始时账户已有的可用现金
-             * @default 0
-             */
-            initial_capital: number;
-            /**
-             * Periodic Investment Amount
-             * @description 每次定投金额，单位为人民币元；按投资频率触发时投入该金额
-             * @default 1000
-             */
-            periodic_investment_amount: number;
-            /**
-             * Investment Frequency
-             * @description 定投频率；weekly 表示按周定投，monthly 表示按月定投
-             * @default monthly
-             * @enum {string}
-             */
-            investment_frequency: "weekly" | "monthly";
-            /**
-             * Monthly Investment Day
-             * @description 按月定投时使用的每月执行日，仅在 investment_frequency=monthly 时有效，取值范围 1-28
-             * @default 1
-             */
-            monthly_investment_day: number | null;
-            /**
-             * Weekly Investment Weekday
-             * @description 按周定投时使用的执行日，仅在 investment_frequency=weekly 时有效；1 表示周一，5 表示周五
-             */
-            weekly_investment_weekday?: (1 | 2 | 3 | 4 | 5) | null;
-            /** @description 本次回测使用的成本模型配置；用于控制佣金、滑点等交易成本口径 */
-            cost_model?: components["schemas"]["CostModelConfig"];
-        };
-        /**
-         * BacktestRunResponse
-         * @description 单次回测成功响应体。
-         *
-         *     说明：
-         *         该结构覆盖结果页指标、图表、明细和可追溯信息，
-         *         前端应直接基于该结构渲染，不再自行重组另一套近似数据结构。
-         */
-        BacktestRunResponse: {
-            /**
-             * Run Id
-             * @description 本次回测运行 ID；用于标识一次独立运行结果
-             */
-            run_id: string;
-            /**
-             * Request Id
-             * @description 本次请求的追踪 ID；用于排查问题和关联日志
-             */
-            request_id: string;
-            /**
-             * Strategy Id
-             * @description 本次运行实际执行的策略标识；当前通常为 dca
-             */
-            strategy_id: string;
-            /**
-             * Engine Version
-             * @description 回测引擎版本；用于标记当前结果对应的引擎口径
-             */
-            engine_version: string;
-            /**
-             * Metric Definition Version
-             * @description 指标定义版本；用于标记收益率、回撤、夏普等指标的计算口径版本
-             */
-            metric_definition_version: string;
-            /** @description 本次运行的输入快照；用于可复现性、导出和结果追溯 */
-            input_snapshot: components["schemas"]["BacktestRunRequest"];
-            /** @description 结果摘要指标；供结果页指标卡直接展示 */
-            summary: components["schemas"]["BacktestSummary"];
-            /**
-             * Nav Series
-             * @description 净值曲线数据；供结果页净值图直接使用
-             */
-            nav_series: components["schemas"]["BacktestTimeSeriesPoint"][];
-            /**
-             * Drawdown Series
-             * @description 回撤曲线数据；供结果页回撤图直接使用
-             */
-            drawdown_series: components["schemas"]["BacktestTimeSeriesPoint"][];
-            /**
-             * Capital Curve
-             * @description 累计投入与总资产对比曲线；供结果页资金曲线图直接使用
-             */
-            capital_curve: components["schemas"]["BacktestCapitalPoint"][];
-            /**
-             * Records
-             * @description 日级明细记录；供结果页明细表和后续导出能力直接使用
-             */
-            records: components["schemas"]["BacktestDailyRecord"][];
-            /**
-             * Message
-             * @description 执行结果说明；用于告诉前端当前返回的是正式结果还是占位结果
-             */
-            message: string;
-        };
-        /**
          * BacktestSummary
          * @description 回测结果摘要指标。
          *
@@ -381,6 +252,167 @@ export interface components {
             slippage_rate: number;
         };
         /**
+         * DcaBacktestRunResponse
+         * @description DCA 策略的回测响应结构。
+         *
+         *     说明：
+         *         在基类基础上附加输入快照，供可复现性与结果追溯使用。
+         */
+        DcaBacktestRunResponse: {
+            /**
+             * Run Id
+             * @description 本次回测运行 ID；用于标识一次独立运行结果
+             */
+            run_id: string;
+            /**
+             * Request Id
+             * @description 本次请求的追踪 ID；用于排查问题和关联日志
+             */
+            request_id: string;
+            /**
+             * Strategy Id
+             * @description 本次运行实际执行的策略标识；当前通常为 dca
+             */
+            strategy_id: string;
+            /**
+             * Engine Version
+             * @description 回测引擎版本；用于标记当前结果对应的引擎口径
+             */
+            engine_version: string;
+            /**
+             * Metric Definition Version
+             * @description 指标定义版本；用于标记收益率、回撤、夏普等指标的计算口径版本
+             */
+            metric_definition_version: string;
+            /** @description 结果摘要指标；供结果页指标卡直接展示 */
+            summary: components["schemas"]["BacktestSummary"];
+            /**
+             * Nav Series
+             * @description 净值曲线数据；供结果页净值图直接使用
+             */
+            nav_series: components["schemas"]["BacktestTimeSeriesPoint"][];
+            /**
+             * Drawdown Series
+             * @description 回撤曲线数据；供结果页回撤图直接使用
+             */
+            drawdown_series: components["schemas"]["BacktestTimeSeriesPoint"][];
+            /**
+             * Capital Curve
+             * @description 累计投入与总资产对比曲线；供结果页资金曲线图直接使用
+             */
+            capital_curve: components["schemas"]["BacktestCapitalPoint"][];
+            /**
+             * Records
+             * @description 日级明细记录；供结果页明细表和后续导出能力直接使用
+             */
+            records: components["schemas"]["BacktestDailyRecord"][];
+            /**
+             * Message
+             * @description 执行结果说明；用于告诉前端当前返回的是正式结果还是占位结果
+             */
+            message: string;
+            /**
+             * Input Snapshot
+             * @description 本次运行的输入快照；用于可复现性、导出和结果追溯
+             */
+            input_snapshot: components["schemas"]["DcaMonthlyBacktestRunRequest"] | components["schemas"]["DcaWeeklyBacktestRunRequest"];
+        };
+        /**
+         * DcaMonthlyBacktestRunRequest
+         * @description 按月定投的 DCA 回测请求。
+         */
+        DcaMonthlyBacktestRunRequest: {
+            /**
+             * Symbol
+             * @description ETF 代码，例如 510300；当前约定只接受 A 股 ETF 标的代码
+             */
+            symbol: string;
+            /**
+             * Start Date
+             * Format: date
+             * @description 回测开始日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description 回测结束日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
+             */
+            end_date: string;
+            /**
+             * Initial Capital
+             * @description 初始现金，单位为人民币元；表示回测开始时账户已有的可用现金
+             * @default 0
+             */
+            initial_capital: number;
+            /** @description 本次回测使用的成本模型配置；用于控制佣金、滑点等交易成本口径 */
+            cost_model?: components["schemas"]["CostModelConfig"];
+            /**
+             * Periodic Investment Amount
+             * @description 每次定投金额，单位为人民币元；按投资频率触发时投入该金额
+             * @default 1000
+             */
+            periodic_investment_amount: number;
+            /**
+             * @description 定投频率；monthly 表示按月定投 (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            investment_frequency: "monthly";
+            /**
+             * Monthly Investment Day
+             * @description 按月定投时使用的每月执行日，仅在 investment_frequency=monthly 时有效，取值范围 1-28
+             */
+            monthly_investment_day: number;
+        };
+        /**
+         * DcaWeeklyBacktestRunRequest
+         * @description 按周定投的 DCA 回测请求。
+         */
+        DcaWeeklyBacktestRunRequest: {
+            /**
+             * Symbol
+             * @description ETF 代码，例如 510300；当前约定只接受 A 股 ETF 标的代码
+             */
+            symbol: string;
+            /**
+             * Start Date
+             * Format: date
+             * @description 回测开始日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             * @description 回测结束日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间
+             */
+            end_date: string;
+            /**
+             * Initial Capital
+             * @description 初始现金，单位为人民币元；表示回测开始时账户已有的可用现金
+             * @default 0
+             */
+            initial_capital: number;
+            /** @description 本次回测使用的成本模型配置；用于控制佣金、滑点等交易成本口径 */
+            cost_model?: components["schemas"]["CostModelConfig"];
+            /**
+             * Periodic Investment Amount
+             * @description 每次定投金额，单位为人民币元；按投资频率触发时投入该金额
+             * @default 1000
+             */
+            periodic_investment_amount: number;
+            /**
+             * @description 定投频率；weekly 表示按周定投 (enum property replaced by openapi-typescript)
+             * @enum {string}
+             */
+            investment_frequency: "weekly";
+            /**
+             * Weekly Investment Weekday
+             * @description 按周定投时使用的执行日，仅在 investment_frequency=weekly 时有效；1 表示周一，5 表示周五
+             * @enum {integer}
+             */
+            weekly_investment_weekday: 1 | 2 | 3 | 4 | 5;
+        };
+        /**
          * ErrorResponse
          * @description 统一错误响应体。
          *
@@ -455,7 +487,7 @@ export interface operations {
             };
         };
     };
-    run_backtest_api_v1_backtests_run_post: {
+    run_dca_backtest_api_v1_backtests_dca_run_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -464,7 +496,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BacktestRunRequest"];
+                "application/json": components["schemas"]["DcaMonthlyBacktestRunRequest"] | components["schemas"]["DcaWeeklyBacktestRunRequest"];
             };
         };
         responses: {
@@ -474,7 +506,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BacktestRunResponse"];
+                    "application/json": components["schemas"]["DcaBacktestRunResponse"];
                 };
             };
             /** @description Request payload validation failed */

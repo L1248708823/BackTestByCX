@@ -1,6 +1,6 @@
 # 全栈架构设计文档（V2 详细版）
 
-更新时间：2026-02-23  
+更新时间：2026-03-30  
 文档状态：可进入实现  
 目标读者：你本人、代码评审者（Claude Code）、后续协作开发者
 
@@ -95,7 +95,7 @@
 
 ### 4.2 运行时关系（简化时序）
 
-1. 前端提交参数至 `/api/backtests/run`。
+1. 前端提交参数至 `/api/v1/backtests/dca/run`。
 2. 后端拉取并标准化行情数据。
 3. 引擎执行策略，产出统一结果对象。
 4. 后端落库运行记录，返回 `run_id` 与结果快照。
@@ -160,12 +160,11 @@ backend/
   app/
     main.py
     api/
-      routers/
-        etf_router.py
-        backtest_router.py
-        experiment_router.py
-        report_router.py
       deps.py
+      v1/
+        router.py
+        health.py
+        dca_backtest.py
       error_handlers.py
     schemas/
       common.py
@@ -173,7 +172,7 @@ backend/
       experiment.py
       report.py
     services/
-      backtest_service.py
+      dca_backtest_service.py
       experiment_service.py
       report_service.py
       run_query_service.py
@@ -232,7 +231,7 @@ backend/
 #### 6.2.1 单次回测
 
 1. 校验请求参数与策略参数。
-2. 获取行情数据（缓存优先，源接口兜底）。
+2. 获取行情数据（缓存优先，缓存未命中时再调用源接口）。
 3. 构建策略上下文并执行引擎。
 4. 计算指标并组装统一结果。
 5. 写入运行记录（输入、输出、版本、耗时）。
@@ -689,4 +688,3 @@ backend/
 当前架构方案采用“**可扩展的单体分层**”：  
 在不牺牲交付速度的前提下，已经为策略扩展、模型替换、数据源替换、服务拆分预留清晰接口和边界。  
 若严格按本文件执行并保持注释规范，项目不会演变成玩具 Demo，而是可持续演进的个人量化工程底座。
-

@@ -1,13 +1,13 @@
 """单次回测接口 Schema 定义。
 
-本文件用于定义 `POST /api/v1/backtests/run` 的请求体和响应体结构，
+本文件用于定义回测请求与结果的请求体和响应体结构，
 作为后端接口、OpenAPI 文档和前端类型收敛的唯一事实来源之一。
 """
 
 from datetime import date as DateType
-from typing import Literal
+from typing import Annotated, Literal, TypeAlias, Union
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class CostModelConfig(BaseModel):
@@ -39,44 +39,22 @@ class CostModelConfig(BaseModel):
     )
 
 
-class BacktestRunRequest(BaseModel):
-    """单次回测请求体。
+class BacktestRunRequestBase(BaseModel):
+    """回测请求基类。
 
     说明：
-        该结构描述用户从参数页提交到后端的一次完整回测配置。
-        当前虽然 MVP 只落地 `dca`，但 `strategy_id` 属于已明确的核心扩展点，因此保留。
+        该结构用于描述所有策略共通的参数，如回测区间、标的和初始资金。
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     symbol: str = Field(description="ETF 代码，例如 510300；当前约定只接受 A 股 ETF 标的代码")
     start_date: DateType = Field(description="回测开始日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间")
     end_date: DateType = Field(description="回测结束日期，格式为 YYYY-MM-DD；该日期当天纳入回测区间")
-    strategy_id: str = Field(
-        default="dca",
-        description="策略标识；当前默认且唯一有效值是 dca，后续新增策略时仍沿用该入口字段",
-    )
     initial_capital: float = Field(
         default=0,
         ge=0,
         description="初始现金，单位为人民币元；表示回测开始时账户已有的可用现金",
-    )
-    periodic_investment_amount: float = Field(
-        default=1000,
-        ge=0,
-        description="每次定投金额，单位为人民币元；按投资频率触发时投入该金额",
-    )
-    investment_frequency: Literal["weekly", "monthly"] = Field(
-        default="monthly",
-        description="定投频率；weekly 表示按周定投，monthly 表示按月定投",
-    )
-    monthly_investment_day: int | None = Field(
-        default=1,
-        ge=1,
-        le=28,
-        description="按月定投时使用的每月执行日，仅在 investment_frequency=monthly 时有效，取值范围 1-28",
-    )
-    weekly_investment_weekday: Literal[1, 2, 3, 4, 5] | None = Field(
-        default=None,
-        description="按周定投时使用的执行日，仅在 investment_frequency=weekly 时有效；1 表示周一，5 表示周五",
     )
     cost_model: CostModelConfig = Field(
         default_factory=CostModelConfig,
@@ -84,31 +62,51 @@ class BacktestRunRequest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_schedule_fields(self) -> "BacktestRunRequest":
-        """校验日期区间和定投调度字段。
-
-        入参：
-            无。使用模型实例自身字段完成校验。
-
-        出参：
-            BacktestRunRequest：校验通过后的当前实例。
-        """
+    def validate_dates(self) -> "BacktestRunRequestBase":
+        """校验日期区间，保证 start_date 不晚于 end_date。"""
         if self.start_date > self.end_date:
             raise ValueError("start_date 必须早于或等于 end_date")
-
-        if self.investment_frequency == "monthly":
-            if self.monthly_investment_day is None:
-                raise ValueError("investment_frequency=monthly 时必须提供 monthly_investment_day")
-            if self.weekly_investment_weekday is not None:
-                raise ValueError("investment_frequency=monthly 时不能提供 weekly_investment_weekday")
-
-        if self.investment_frequency == "weekly":
-            if self.weekly_investment_weekday is None:
-                raise ValueError("investment_frequency=weekly 时必须提供 weekly_investment_weekday")
-            if self.monthly_investment_day is not None:
-                raise ValueError("investment_frequency=weekly 时不能提供 monthly_investment_day")
-
         return self
+
+
+class DcaBacktestRunRequestBase(BacktestRunRequestBase):
+    """DCA 回测请求的公共字段基类。"""
+
+    periodic_investment_amount: float = Field(
+        default=1000,
+        ge=0,
+        description="每次定投金额，单位为人民币元；按投资频率触发时投入该金额",
+    )
+
+
+class DcaMonthlyBacktestRunRequest(DcaBacktestRunRequestBase):
+    """按月定投的 DCA 回测请求。"""
+
+    investment_frequency: Literal["monthly"] = Field(
+        description="定投频率；monthly 表示按月定投",
+    )
+    monthly_investment_day: int = Field(
+        ge=1,
+        le=28,
+        description="按月定投时使用的每月执行日，仅在 investment_frequency=monthly 时有效，取值范围 1-28",
+    )
+
+
+class DcaWeeklyBacktestRunRequest(DcaBacktestRunRequestBase):
+    """按周定投的 DCA 回测请求。"""
+
+    investment_frequency: Literal["weekly"] = Field(
+        description="定投频率；weekly 表示按周定投",
+    )
+    weekly_investment_weekday: Literal[1, 2, 3, 4, 5] = Field(
+        description="按周定投时使用的执行日，仅在 investment_frequency=weekly 时有效；1 表示周一，5 表示周五",
+    )
+
+
+DcaBacktestRunRequest: TypeAlias = Annotated[
+    Union[DcaMonthlyBacktestRunRequest, DcaWeeklyBacktestRunRequest],
+    Field(discriminator="investment_frequency"),
+]
 
 
 class BacktestSummary(BaseModel):
@@ -158,12 +156,11 @@ class BacktestDailyRecord(BaseModel):
     )
 
 
-class BacktestRunResponse(BaseModel):
-    """单次回测成功响应体。
+class BacktestRunResponseBase(BaseModel):
+    """单次回测响应基类。
 
     说明：
-        该结构覆盖结果页指标、图表、明细和可追溯信息，
-        前端应直接基于该结构渲染，不再自行重组另一套近似数据结构。
+        该结构提供所有策略共通的结果字段，供结果页各区域直接渲染。
     """
 
     run_id: str = Field(description="本次回测运行 ID；用于标识一次独立运行结果")
@@ -172,9 +169,6 @@ class BacktestRunResponse(BaseModel):
     engine_version: str = Field(description="回测引擎版本；用于标记当前结果对应的引擎口径")
     metric_definition_version: str = Field(
         description="指标定义版本；用于标记收益率、回撤、夏普等指标的计算口径版本",
-    )
-    input_snapshot: BacktestRunRequest = Field(
-        description="本次运行的输入快照；用于可复现性、导出和结果追溯",
     )
     summary: BacktestSummary = Field(description="结果摘要指标；供结果页指标卡直接展示")
     nav_series: list[BacktestTimeSeriesPoint] = Field(
@@ -190,3 +184,15 @@ class BacktestRunResponse(BaseModel):
         description="日级明细记录；供结果页明细表和后续导出能力直接使用",
     )
     message: str = Field(description="执行结果说明；用于告诉前端当前返回的是正式结果还是占位结果")
+
+
+class DcaBacktestRunResponse(BacktestRunResponseBase):
+    """DCA 策略的回测响应结构。
+
+    说明：
+        在基类基础上附加输入快照，供可复现性与结果追溯使用。
+    """
+
+    input_snapshot: DcaBacktestRunRequest = Field(
+        description="本次运行的输入快照；用于可复现性、导出和结果追溯",
+    )

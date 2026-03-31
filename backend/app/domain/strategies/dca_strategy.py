@@ -1,77 +1,88 @@
-"""Backtest service module.
+"""DCA 策略执行实现。
 
-This service coordinates the backtest use case.
-Current implementation is a deterministic placeholder for module bootstrap.
+本文件用于承载当前 DCA 单策略的最小执行逻辑。
+现阶段先返回确定性的占位结果，用于把策略执行边界从 service 中拆出来。
 """
 
-from datetime import date
+from __future__ import annotations
+
 from uuid import uuid4
 
+from app.domain.models.market_bar import MarketBar
+from app.domain.strategies.base import StrategyBase
+from app.infra.data_sources.base import MarketDataProvider
 from app.schemas.backtest import (
     BacktestCapitalPoint,
     BacktestDailyRecord,
-    BacktestRunRequest,
-    BacktestRunResponse,
     BacktestSummary,
     BacktestTimeSeriesPoint,
+    DcaBacktestRunRequest,
+    DcaBacktestRunResponse,
 )
 
 
-class BacktestService:
-    """Service object for single backtest execution use case."""
+class DcaStrategy(StrategyBase[DcaBacktestRunRequest, DcaBacktestRunResponse]):
+    """DCA 策略执行器。"""
 
-    engine_version = "backtest-engine.v1"
-    metric_definition_version = "metrics.v1"
+    strategy_id = "dca"
 
-    def run_backtest(self, payload: BacktestRunRequest) -> BacktestRunResponse:
-        """Execute a placeholder backtest and return deterministic metrics.
+    def __init__(self, provider: MarketDataProvider) -> None:
+        """初始化 DCA 策略执行器。
 
         Args:
-            payload: Backtest input payload validated by Pydantic.
+            provider: 当前回测使用的行情数据源。
+        """
+        self._provider = provider
+
+    def run(self, payload: DcaBacktestRunRequest) -> DcaBacktestRunResponse:
+        """执行一次 DCA 回测并返回结果。
+
+        Args:
+            payload: 已通过 Pydantic 校验的 DCA 回测请求体。
 
         Returns:
-            BacktestRunResponse: Structured run output.
-
-        Notes:
-            This placeholder keeps API contracts stable while the real strategy
-            engine and data provider modules are implemented in later modules.
+            DcaBacktestRunResponse: DCA 回测响应结构。
         """
-        trading_days = self._calculate_trading_days(payload.start_date, payload.end_date)
+        bars = self._provider.fetch_bars(
+            symbol=payload.symbol,
+            start_date=payload.start_date,
+            end_date=payload.end_date,
+        )
         request_id = f"req_{uuid4().hex[:12]}"
+        start_bar = bars[0]
+        end_bar = bars[-1]
 
-        # Deterministic bootstrap metrics keep frontend integration stable.
         summary = BacktestSummary(
             total_return_pct=6.5,
             annualized_return_pct=4.1,
             max_drawdown_pct=-8.2,
             annualized_volatility_pct=11.3,
             sharpe_ratio=0.58,
-            trading_days=trading_days,
+            trading_days=len(bars),
         )
-
         nav_series = [
-            BacktestTimeSeriesPoint(date=payload.start_date, value=1.0),
-            BacktestTimeSeriesPoint(date=payload.end_date, value=1.065),
+            BacktestTimeSeriesPoint(date=start_bar.trade_date, value=1.0),
+            BacktestTimeSeriesPoint(date=end_bar.trade_date, value=1.065),
         ]
         drawdown_series = [
-            BacktestTimeSeriesPoint(date=payload.start_date, value=0.0),
-            BacktestTimeSeriesPoint(date=payload.end_date, value=-8.2),
+            BacktestTimeSeriesPoint(date=start_bar.trade_date, value=0.0),
+            BacktestTimeSeriesPoint(date=end_bar.trade_date, value=-8.2),
         ]
         capital_curve = [
             BacktestCapitalPoint(
-                date=payload.start_date,
+                date=start_bar.trade_date,
                 invested_capital=payload.initial_capital,
                 total_value=payload.initial_capital,
             ),
             BacktestCapitalPoint(
-                date=payload.end_date,
+                date=end_bar.trade_date,
                 invested_capital=payload.initial_capital + payload.periodic_investment_amount,
                 total_value=payload.initial_capital + payload.periodic_investment_amount * 1.065,
             ),
         ]
         records = [
             BacktestDailyRecord(
-                date=payload.start_date,
+                date=start_bar.trade_date,
                 invested_capital=payload.initial_capital,
                 cash_balance=payload.initial_capital,
                 position_value=0,
@@ -82,7 +93,7 @@ class BacktestService:
                 event="run_started",
             ),
             BacktestDailyRecord(
-                date=payload.end_date,
+                date=end_bar.trade_date,
                 invested_capital=payload.initial_capital + payload.periodic_investment_amount,
                 cash_balance=0,
                 position_value=payload.initial_capital + payload.periodic_investment_amount * 1.065,
@@ -94,10 +105,10 @@ class BacktestService:
             ),
         ]
 
-        return BacktestRunResponse(
+        return DcaBacktestRunResponse(
             run_id=f"run_{uuid4().hex[:12]}",
             request_id=request_id,
-            strategy_id=payload.strategy_id,
+            strategy_id=self.strategy_id,
             engine_version=self.engine_version,
             metric_definition_version=self.metric_definition_version,
             input_snapshot=payload.model_copy(deep=True),
@@ -108,16 +119,3 @@ class BacktestService:
             records=records,
             message="Backtest skeleton is running; strategy engine will replace placeholder logic.",
         )
-
-    def _calculate_trading_days(self, start_date: date, end_date: date) -> int:
-        """Calculate inclusive day count for date range inputs.
-
-        Args:
-            start_date: Inclusive start date.
-            end_date: Inclusive end date.
-
-        Returns:
-            int: Inclusive day count, minimum value is 1.
-        """
-        delta_days = (end_date - start_date).days + 1
-        return max(delta_days, 1)

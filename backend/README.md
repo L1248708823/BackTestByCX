@@ -1,6 +1,6 @@
 # Backend（FastAPI）
 
-更新时间：2026-02-23
+更新时间：2026-03-30
 
 ## 1. 模块目标
 
@@ -13,9 +13,9 @@
 1. FastAPI 入口：`app/main.py`
 2. v1 路由聚合：`app/api/v1/router.py`
 3. 健康检查接口：`GET /api/v1/health`
-4. 回测占位接口：`POST /api/v1/backtests/run`
-5. Pydantic 请求/响应模型：`app/schemas/backtest.py`
-6. Service 分层示例：`app/services/backtest_service.py`
+4. DCA 单次回测接口：`POST /api/v1/backtests/dca/run`
+5. DCA 请求/响应模型：`app/schemas/backtest.py`
+6. Service 分层示例：`app/services/dca_backtest_service.py`
 7. 基础测试：`tests/test_health.py`
 
 ## 3. 目录结构
@@ -31,12 +31,12 @@ backend/
       v1/
         router.py
         health.py
-        backtest.py
+        dca_backtest.py
     schemas/
       common.py
       backtest.py
     services/
-      backtest_service.py
+      dca_backtest_service.py
   tests/
     test_health.py
   requirements.txt
@@ -57,5 +57,5 @@ backend/
 ## 6. 下一步（模块 B.1 之后）
 
 1. 引入真实数据源适配接口（AkShare Provider）。
-2. 把 `BacktestService` 的占位逻辑替换为真实策略引擎调用。
+2. 把 `DcaBacktestService` 的占位逻辑替换为真实 DCA 策略引擎调用，并同步策略上下文结构。
 3. 增加回测结果持久化与 run_id 查询接口。
